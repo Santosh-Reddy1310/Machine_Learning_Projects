@@ -1,0 +1,5 @@
+streamlit
+matplotlib
+pandas       # if used
+numpy        # if used
+scikit-learn # if you're doing ML
