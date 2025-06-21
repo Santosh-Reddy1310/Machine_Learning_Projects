@@ -4,8 +4,8 @@
 # Ignore environment files
 .env
 *.env
-.toml
-.toml/
+# .gitignore
+.streamlit/secrets.toml
 
 # Ignore system files
 __pycache__/
