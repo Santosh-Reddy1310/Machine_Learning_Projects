@@ -1,39 +1,33 @@
-# agent_utils.py
+import streamlit as st
 import os
 from pydantic_ai.agent import Agent
 from pydantic_ai.common_tools.tavily import tavily_search_tool
 
-from dotenv import load_dotenv
-load_dotenv()
+# Fetch keys from Streamlit secrets
+groq_api_key = st.secrets["GROQ_API_KEY"]
+tavily_api_key = st.secrets["TAVILY_API_KEY"]
 
-os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+# Set for downstream usage
+os.environ["GROQ_API_KEY"] = groq_api_key
 
 # Define and export the agent
 agent = Agent(
     "groq:llama-3.1-8b-instant",
-    tools=[tavily_search_tool(TAVILY_API_KEY)],
+    tools=[tavily_search_tool(tavily_api_key)],
     system_prompt="Search Tavily for the given query and return the results.",
 )
 
 def get_search_results(query: str) -> str:
     result = agent.run_sync(query)
 
-    # Case 1: If result has an .output attribute
+    # Handle different result types
     if hasattr(result, "output"):
         return str(result.output).strip()
 
-    # Case 2: If result is a dict-like response (tool traces or intermediate steps)
     if isinstance(result, dict):
         if "output" in result:
             return str(result["output"]).strip()
         elif "steps" in result:
-            outputs = []
-            for step in result["steps"]:
-                if "output" in step:
-                    outputs.append(str(step["output"]))
-            return "\n".join(outputs)
+            return "\n".join(str(step.get("output", "")) for step in result["steps"])
 
     return "❌ Unable to retrieve proper output. Try rephrasing your query."
-# If no output is found, return a default message
-    return "❌ No results found. Please try a different query." 
